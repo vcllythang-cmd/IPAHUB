@@ -6,58 +6,52 @@ import UIKit
 private let websiteURL = URL(string: "https://iosgodsmod.xyz")!
 
 struct ContentView: View {
+    @State private var webView: WKWebView?
     @State private var isLoading = true
     @State private var loadFailed = false
     @State private var progress: Double = 0
-    @State private var webView: WKWebView?
 
     var body: some View {
         ZStack {
-            Color.white.ignoresSafeArea()
+            Color.white
 
-            if let webView {
+            if let webView = webView {
                 WebViewContainer(
                     webView: webView,
                     isLoading: $isLoading,
                     loadFailed: $loadFailed,
                     progress: $progress
                 )
-                .ignoresSafeArea(edges: .bottom)
-            } else {
-                ProgressView("Đang khởi tạo IPA HUB…")
-                    .tint(Color.blue)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(.all)
             }
 
             if isLoading && !loadFailed {
-                VStack(spacing: 10) {
+                VStack(spacing: 12) {
                     ProgressView(value: progress)
-                        .tint(Color.blue)
+                        .tint(.blue)
                         .frame(width: 150)
 
-                    Text("Đang tải IPA HUB…")
+                    Text("Đang tải IPA HUB...")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundColor(.secondary)
                 }
-                .padding(18)
-                .background(
-                    .regularMaterial,
-                    in: RoundedRectangle(cornerRadius: 16)
-                )
+                .padding(20)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
 
             if loadFailed {
-                VStack(spacing: 14) {
+                VStack(spacing: 16) {
                     Image(systemName: "wifi.exclamationmark")
-                        .font(.system(size: 34))
-                        .foregroundStyle(Color.blue)
+                        .font(.system(size: 38))
+                        .foregroundColor(.blue)
 
                     Text("Không thể kết nối")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 21, weight: .bold))
 
-                    Text("Kiểm tra kết nối mạng rồi thử tải lại IPA HUB.")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                    Text("Kiểm tra Internet rồi thử lại.")
+                        .foregroundColor(.secondary)
 
                     Button {
                         loadFailed = false
@@ -72,26 +66,29 @@ struct ContentView: View {
                         )
                     } label: {
                         Text("Thử lại")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 28)
-                            .padding(.vertical, 12)
-                            .background(Color.blue, in: Capsule())
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 30)
+                            .padding(.vertical, 13)
+                            .background(Color.blue)
+                            .clipShape(Capsule())
                     }
                 }
                 .padding(28)
-                .frame(maxWidth: 320)
-                .background(
-                    .regularMaterial,
-                    in: RoundedRectangle(cornerRadius: 22)
-                )
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .padding(24)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.white.ignoresSafeArea())
+        .ignoresSafeArea(.all)
         .onAppear {
             if webView == nil {
                 webView = WebViewFactory.make()
             }
         }
+        .preferredColorScheme(.light)
         .statusBarHidden(false)
     }
 }
@@ -110,13 +107,7 @@ private struct WebViewContainer: UIViewRepresentable {
         context.coordinator.observe(webView)
 
         if webView.url == nil {
-            webView.load(
-                URLRequest(
-                    url: websiteURL,
-                    cachePolicy: .useProtocolCachePolicy,
-                    timeoutInterval: 30
-                )
-            )
+            webView.load(URLRequest(url: websiteURL))
         }
 
         return webView
@@ -222,18 +213,14 @@ private struct WebViewContainer: UIViewRepresentable {
             if url.scheme == "http" || url.scheme == "https" {
                 if url.host == "iosgodsmod.xyz" ||
                    url.host == "www.iosgodsmod.xyz" {
-
                     decisionHandler(.allow)
-
                 } else {
                     UIApplication.shared.open(url)
                     decisionHandler(.cancel)
                 }
-
             } else if ["mailto", "tel"].contains(url.scheme ?? "") {
                 UIApplication.shared.open(url)
                 decisionHandler(.cancel)
-
             } else {
                 decisionHandler(.allow)
             }
@@ -245,15 +232,12 @@ private struct WebViewContainer: UIViewRepresentable {
             for navigationAction: WKNavigationAction,
             windowFeatures: WKWindowFeatures
         ) -> WKWebView? {
-
             if navigationAction.targetFrame == nil,
                let url = navigationAction.request.url {
 
                 if url.host == "iosgodsmod.xyz" ||
                    url.host == "www.iosgodsmod.xyz" {
-
                     webView.load(URLRequest(url: url))
-
                 } else {
                     UIApplication.shared.open(url)
                 }
@@ -288,25 +272,25 @@ private enum WebViewFactory {
         preferences.allowsContentJavaScript = true
 
         let configuration = WKWebViewConfiguration()
-
         configuration.defaultWebpagePreferences = preferences
         configuration.websiteDataStore = .default()
         configuration.allowsInlineMediaPlayback = true
-        configuration.mediaTypesRequiringUserActionForPlayback = []
 
-        let view = WKWebView(
+        let webView = WKWebView(
             frame: .zero,
             configuration: configuration
         )
 
-        view.isOpaque = false
-        view.backgroundColor = .white
-        view.scrollView.backgroundColor = .white
+        webView.isOpaque = false
+        webView.backgroundColor = .white
+        webView.scrollView.backgroundColor = .white
 
-        view.scrollView.contentInsetAdjustmentBehavior = .never
-        view.allowsBackForwardNavigationGestures = true
-        view.scrollView.bounces = true
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+        webView.scrollView.contentInset = .zero
+        webView.scrollView.bounces = true
 
-        return view
+        webView.allowsBackForwardNavigationGestures = true
+
+        return webView
     }
 }
