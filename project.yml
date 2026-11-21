@@ -11,10 +11,15 @@ targets:
     type: application
     platform: iOS
     deploymentTarget: "15.0"
+
     sources:
       - path: IPAHub
+        excludes:
+          - LaunchScreen.storyboard
+
     info:
       path: Info.plist
+
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.thang.ipahub
