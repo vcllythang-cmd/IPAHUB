@@ -1,0 +1,30 @@
+
+name: IPAHub
+
+options:
+  bundleIdPrefix: com.thang
+  deploymentTarget:
+    iOS: "15.0"
+
+targets:
+  IPAHub:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+
+    sources:
+      - path: IPAHub
+
+    info:
+      path: Info.plist
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.thang.ipahub
+        PRODUCT_NAME: IPA HUB
+        INFOPLIST_KEY_CFBundleDisplayName: IPA HUB
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGNING_ALLOWED: NO
