@@ -6,7 +6,7 @@ import UIKit
 private let websiteURL = URL(string: "https://iosgodsmod.xyz")!
 
 struct ContentView: View {
-    @State private var webView: WKWebView?
+    @State private var webView = WebViewFactory.make()
     @State private var isLoading = true
     @State private var loadFailed = false
     @State private var progress: Double = 0
@@ -15,34 +15,28 @@ struct ContentView: View {
         ZStack {
             Color.white
 
-            if let webView = webView {
-                WebViewContainer(
-                    webView: webView,
-                    isLoading: $isLoading,
-                    loadFailed: $loadFailed,
-                    progress: $progress
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea(.all)
-            }
+            WebViewContainer(
+                webView: webView,
+                isLoading: $isLoading,
+                loadFailed: $loadFailed,
+                progress: $progress
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.white)
+            .ignoresSafeArea()
 
             if isLoading && !loadFailed {
-                VStack(spacing: 12) {
-                    ProgressView(value: progress)
-                        .tint(.blue)
-                        .frame(width: 150)
-
-                    Text("Đang tải IPA HUB...")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(20)
-                .background(.regularMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                ProgressView(value: progress)
+                    .progressViewStyle(.linear)
+                    .tint(.blue)
+                    .frame(width: 150)
+                    .padding(18)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
             }
 
             if loadFailed {
-                VStack(spacing: 16) {
+                VStack(spacing: 14) {
                     Image(systemName: "wifi.exclamationmark")
                         .font(.system(size: 38))
                         .foregroundColor(.blue)
@@ -53,39 +47,29 @@ struct ContentView: View {
                     Text("Kiểm tra Internet rồi thử lại.")
                         .foregroundColor(.secondary)
 
-                    Button {
+                    Button("Thử lại") {
                         loadFailed = false
                         isLoading = true
-
-                        webView?.load(
-                            URLRequest(
-                                url: websiteURL,
-                                cachePolicy: .reloadIgnoringLocalCacheData,
-                                timeoutInterval: 30
-                            )
-                        )
-                    } label: {
-                        Text("Thử lại")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 13)
-                            .background(Color.blue)
-                            .clipShape(Capsule())
+                        webView.load(URLRequest(url: websiteURL))
                     }
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 30)
+                    .padding(.vertical, 13)
+                    .background(Color.blue)
+                    .clipShape(Capsule())
                 }
                 .padding(28)
                 .background(.regularMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 22))
-                .padding(24)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.white.ignoresSafeArea())
-        .ignoresSafeArea(.all)
+        .ignoresSafeArea()
         .onAppear {
-            if webView == nil {
-                webView = WebViewFactory.make()
+            if webView.url == nil {
+                webView.load(URLRequest(url: websiteURL))
             }
         }
         .preferredColorScheme(.light)
@@ -106,17 +90,13 @@ private struct WebViewContainer: UIViewRepresentable {
 
         context.coordinator.observe(webView)
 
-        if webView.url == nil {
-            webView.load(URLRequest(url: websiteURL))
-        }
+        webView.backgroundColor = .white
+        webView.scrollView.backgroundColor = .white
 
         return webView
     }
 
-    func updateUIView(
-        _ uiView: WKWebView,
-        context: Context
-    ) {}
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
@@ -126,10 +106,7 @@ private struct WebViewContainer: UIViewRepresentable {
         )
     }
 
-    final class Coordinator: NSObject,
-        WKNavigationDelegate,
-        WKUIDelegate {
-
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         @Binding var isLoading: Bool
         @Binding var loadFailed: Bool
         @Binding var progress: Double
@@ -191,10 +168,7 @@ private struct WebViewContainer: UIViewRepresentable {
 
         private func handle(_ error: Error) {
             let nsError = error as NSError
-
-            if nsError.code == NSURLErrorCancelled {
-                return
-            }
+            if nsError.code == NSURLErrorCancelled { return }
 
             isLoading = false
             loadFailed = true
@@ -234,7 +208,6 @@ private struct WebViewContainer: UIViewRepresentable {
         ) -> WKWebView? {
             if navigationAction.targetFrame == nil,
                let url = navigationAction.request.url {
-
                 if url.host == "iosgodsmod.xyz" ||
                    url.host == "www.iosgodsmod.xyz" {
                     webView.load(URLRequest(url: url))
@@ -242,7 +215,6 @@ private struct WebViewContainer: UIViewRepresentable {
                     UIApplication.shared.open(url)
                 }
             }
-
             return nil
         }
 
@@ -281,13 +253,13 @@ private enum WebViewFactory {
             configuration: configuration
         )
 
-        webView.isOpaque = false
+        webView.isOpaque = true
         webView.backgroundColor = .white
         webView.scrollView.backgroundColor = .white
-
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.contentInset = .zero
         webView.scrollView.bounces = true
+        webView.scrollView.automaticallyAdjustsScrollIndicatorInsets = false
 
         webView.allowsBackForwardNavigationGestures = true
 
